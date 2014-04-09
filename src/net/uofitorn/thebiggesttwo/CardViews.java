@@ -17,19 +17,48 @@ public class CardViews {
 	public static final String TAG = "CardViews";
 	
 	int[] xLocations;
+	int [] pairXLocations;
+	int [] tripleXLocations;
+	int [] fiverXLocations;
+	int inPlayYLocation;
 	ArrayList<CardView> handViews;
 	ArrayList<CardView> toPlayViews;
+	ArrayList<CardView> currentPlay;
+
 	BigTwoGame bigTwoGame;
-	int width;
+
 
 	private int spacing;
+
+	private ArrayList<Card> currentPlayCards;
 	
 	public CardViews(BigTwoGame bigTwoGame) {
 		xLocations = new int[13];
+		pairXLocations = new int[2];
+		tripleXLocations = new int[3];
+		fiverXLocations = new int[5];
 		handViews = new ArrayList<CardView>();
+		toPlayViews = new ArrayList<CardView>();
 		this.bigTwoGame = bigTwoGame;
+		setInPlayLocations();
 	}
 	
+	protected void setInPlayLocations() {
+		inPlayYLocation = bigTwoGame.getPlayAreaY() + bigTwoGame.getPlayAreaHeight() - 100;
+		
+		pairXLocations[0] = (Constants.CAMERA_WIDTH / 2) - (Constants.SPACE_BETWEEN_CARDS / 2) - (Constants.CARD_WIDTH / 2);
+		pairXLocations[1] = Constants.CAMERA_WIDTH / 2 + (Constants.SPACE_BETWEEN_CARDS / 2) + (Constants.CARD_WIDTH / 2);
+		
+		tripleXLocations[0] = (Constants.CAMERA_WIDTH / 2) - (Constants.CARD_WIDTH / 2) - Constants.SPACE_BETWEEN_CARDS - (Constants.CARD_WIDTH / 2);
+		tripleXLocations[1] = Constants.CAMERA_WIDTH / 2;
+		tripleXLocations[2] = (Constants.CAMERA_WIDTH / 2) + (Constants.CARD_WIDTH / 2) + Constants.SPACE_BETWEEN_CARDS + (Constants.CARD_WIDTH / 2);
+		
+		fiverXLocations[0] = (Constants.CAMERA_WIDTH / 2) - (Constants.CARD_WIDTH / 2) - Constants.SPACE_BETWEEN_CARDS - (Constants.CARD_WIDTH / 2) - 62;
+		fiverXLocations[1] = (Constants.CAMERA_WIDTH / 2) - (Constants.CARD_WIDTH / 2) - Constants.SPACE_BETWEEN_CARDS - (Constants.CARD_WIDTH / 2);
+		fiverXLocations[2] = Constants.CAMERA_WIDTH / 2;
+		fiverXLocations[3] = (Constants.CAMERA_WIDTH / 2) + (Constants.CARD_WIDTH / 2) + Constants.SPACE_BETWEEN_CARDS + (Constants.CARD_WIDTH / 2);
+		fiverXLocations[4] = (Constants.CAMERA_WIDTH / 2) + (Constants.CARD_WIDTH / 2) + Constants.SPACE_BETWEEN_CARDS + (Constants.CARD_WIDTH / 2) + 62;;
+	}
 	public void repositionCardView(int x, int y, int index) {
 		CardView cardToMove = handViews.get(index);
 		int i = 0;
@@ -40,7 +69,8 @@ public class CardViews {
 				y < bigTwoGame.getPlayAreaY() + bigTwoGame.getPlayAreaHeight()) {
 			Log.d(TAG, "Moving card to toplayarea");
 			handViews.remove(index);
-			computeXLocations(0, 0, handViews.size());
+			computeXLocations(0, handViews.size());
+			toPlayViews.add(cardToMove);
 			updateTags();
 			updateSpritePositions();
 			return;
@@ -48,12 +78,12 @@ public class CardViews {
 			
 		for (CardView cardView : handViews) {
 			Log.d(TAG, "X: " + x + " cardView.x: " + cardView.getSprite().getX() + " and i: " + i + " and handViews.size: " + handViews.size());
-			if (x < cardView.getSprite().getX() && i == 0) {
+			if (x <= (int) cardView.getSprite().getX() && i == 0) {
 				handViews.remove(index);
 				i = -1;
 				Log.d(TAG, "Moving card to leftmost position");
 				break;
-			} else if (x > cardView.getSprite().getX() && x <= cardView.getSprite().getX() + 62) {
+			} else if (x >= (int) cardView.getSprite().getX() && x < (int) cardView.getSprite().getX() + 62) {
 				if (i + 1 == index) {
 					Log.d(TAG, "SHOULD BE GETTING HERE");
 					updateSpritePositions();
@@ -73,7 +103,9 @@ public class CardViews {
 			}
 			i++;
 		}
-				handViews.add(i + 1, cardToMove);
+		if (i >= 14) {
+			Log.d(TAG, "SHOULD NOT BE GETTING HERE!");
+		}		handViews.add(i + 1, cardToMove);
 		updateTags();
 		updateSpritePositions();	
 
@@ -81,8 +113,6 @@ public class CardViews {
 	
 	public void updateSpritePositions() {
 		for (int i = 0; i < handViews.size(); i++) {
-			//Log.d(TAG, "Setting x, y position of: " + cardViewsList.get(i).getCard().toString());
-			Log.d(TAG, "Setting x position for " + i + " to " + xLocations[i]);
 			handViews.get(i).getSprite().setX(xLocations[i]);
 			handViews.get(i).getSprite().setY((65/2) + 5);
 		}
@@ -139,22 +169,68 @@ public class CardViews {
 		this.xLocations = xLocations;
 	}
 	
-	public void computeXLocations(int width, int spacing, int positions) {
-		if (width != 0) {
-			this.width = width;
-		}
+	public void computeXLocations(int spacing, int positions) {
 		if (spacing != 0) {
 			this.spacing = spacing;
 		}
 		
 		int requiredLengthOverTwo = this.spacing * positions / 2;
-		int startingX = (this.width / 2) - requiredLengthOverTwo;
+		int startingX = (Constants.CAMERA_WIDTH / 2) - requiredLengthOverTwo;
 		
-		Log.d(TAG, "Computing new sizes for " + positions + " new cards.");
 		for (int i = 0; i < positions; i++) {
 			int tmp = (i * this.spacing) + startingX;
-			Log.d(TAG, "Adding position : " + tmp + " and startingX is: " + startingX);
 			xLocations[i] = (i * this.spacing) + startingX + 31;
 		}
+	}
+	
+	public ArrayList<Card> getToPlayCards() {
+		ArrayList<Card> toPlayCards = new ArrayList<Card>();
+		for (CardView cardView : toPlayViews) {
+			toPlayCards.add(cardView.getCard());
+		}
+		return toPlayCards;
+	}
+	
+	public ArrayList<CardView> getCurrentPlay() {
+		return currentPlay;
+	}
+
+	public void setCurrentPlay(ArrayList<CardView> currentPlay) {
+		this.currentPlay = currentPlay;
+	}
+	
+	public void setCurrentPlayCards(ArrayList<Card> currentPlayCards) {
+		this.currentPlayCards = currentPlayCards;
+	}
+	
+	public void createCurrentPlayCardViews(CardTextureMap cardTextureMap, 
+			VertexBufferObjectManager vbom, Scene scene) {
+		currentPlay = new ArrayList<CardView>();
+		
+		int []tmp = null;
+		int i = 0;
+		switch (currentPlayCards.size()) {
+			case 2:
+				tmp = pairXLocations;
+				break;
+			case 3:
+				tmp = tripleXLocations;
+				break;
+			case 5:
+				tmp = fiverXLocations;
+				break;
+		}
+
+		for (Card card : currentPlayCards) {
+			Log.d(TAG, "Setting x of new card to " + tmp[i] + " and y to " + inPlayYLocation);
+			CardView cardView = new CardView(card);
+			ITextureRegion region = cardTextureMap.getTextureRegion(card);	
+			Sprite sprite = new Sprite(tmp[i], inPlayYLocation, region, vbom);
+			cardView.setSprite(sprite);
+			cardView.attachToScene(scene);
+			currentPlay.add(cardView);
+			i++;
+		}
+
 	}
 }

@@ -24,6 +24,7 @@ public class BigTwoGame {
 	private int playAreaY;
 	private int playAreaWidth;
 	private int playAreaHeight;
+	private CardViews cardViews;
 	
 	private static BigTwoGame INSTANCE;
 	
@@ -59,6 +60,10 @@ public class BigTwoGame {
 					containsLowest = true;
 				}
 			}
+			
+			// TODO: Remove ME!!
+			containsLowest = true;
+			
 			if (!containsLowest) {
 				return false;
 			}
@@ -123,7 +128,7 @@ public class BigTwoGame {
 				break;
 			case NetworkMessage.PLAY:
 				incrementPlayer();
-				msg.what = Constants.UPDATE_VIEW;
+				msg.what = Constants.RECEIVED_PLAY;
 				currentPlay = message.getPlay();
 				handler.sendMessage(msg);
 				break;
@@ -174,7 +179,7 @@ public class BigTwoGame {
 
 	public int getPlayAreaWidth() {
 		return playAreaWidth;
-	}
+	}	
 
 	public void setPlayAreaWidth(int playAreaWidth) {
 		this.playAreaWidth = playAreaWidth;
@@ -188,4 +193,7 @@ public class BigTwoGame {
 		this.playAreaHeight = playAreaHeight;
 	}
 
+	public void setCardViews(CardViews cardViews) {
+		this.cardViews = cardViews;
+	}
 }
