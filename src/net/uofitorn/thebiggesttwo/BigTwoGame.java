@@ -14,9 +14,9 @@ public class BigTwoGame {
 	
 	private Hand hand;
 	private Play currentPlay;
-	private int playerNumber;
+	private int playerNumber = -1;
 	private int ownerOfCurrentPlay;
-	private int playersTurn = 0;
+	private int currentPlayersTurn = -1;
 	private ClientThread clientThread;
 	private Handler handler;
 	private int numberOfPlayers = 2;
@@ -41,19 +41,24 @@ public class BigTwoGame {
 	}
 	
 	public int getPlayersTurn() {
-		return playersTurn;
+		return currentPlayersTurn;
 	}
 	
 	public void setPlayersTurn(int playersTurn) {
-		this.playersTurn = playersTurn;
+		this.currentPlayersTurn = playersTurn;
 	}
 	
-	public boolean makePlay(Play play) {
+	public int makePlay(Play play) {
 		if (currentPlay == null) {
 			// Can't pass if you're the first player.
 			if (play.getTypeOfPlay() == Play.TypesOfPlays.PASS) {
-				return false;
+				return Constants.CANT_PASS;
 			}
+			
+			if (play.getTypeOfPlay() == Play.TypesOfPlays.INVALID) {
+				return Constants.INVALID_PLAY;
+			}
+			
 			boolean containsLowest = false;
 			for (int i = 0; i < play.getCardsInPlay(); i++) {
 				if (hand.getLowest().getOrdinalNumber() == play.getCard(i).getOrdinalNumber()) {
@@ -61,24 +66,24 @@ public class BigTwoGame {
 				}
 			}
 			
-			// TODO: Remove ME!!
-			containsLowest = true;
+			if (currentPlayersTurn != playerNumber) {
+				return Constants.NOT_YOUR_TURN;
+			}
 			
 			if (!containsLowest) {
-				return false;
+				return Constants.NOT_LOWEST;
 			}
+			
 			currentPlay = play;
 			for (int i = 0; i < play.getCardsInPlay(); i++) {
 				hand.removeCard(play.getCard(i));
 			}
-			incrementPlayer();
 			clientThread.makePlay(play);
-			
-			// Update the view so it reflects the missing cards.
+			// TODO: 	Update the view so it reflects the missing cards.
 			Message msg = handler.obtainMessage();
 			msg.what = Constants.UPDATE_VIEW;
 			handler.sendMessage(msg);
-			return true;
+			return Constants.OK_PLAY;
 		} else if (play.getTypeOfPlay() == Play.TypesOfPlays.PASS) {
 			incrementPlayer();
 			clientThread.makePlay(play);
@@ -86,7 +91,7 @@ public class BigTwoGame {
 			Message msg = handler.obtainMessage();
 			msg.what = Constants.UPDATE_VIEW;
 			handler.sendMessage(msg);
-			return true;
+			return Constants.OK_PLAY;
 		} else if (currentPlay.compareTo(play) == 1) {
 			currentPlay = play;
 			for (int i = 0; i < play.getCardsInPlay(); i++) {
@@ -99,9 +104,9 @@ public class BigTwoGame {
 			Message msg = handler.obtainMessage();
 			msg.what = Constants.UPDATE_VIEW;
 			handler.sendMessage(msg);
-			return true;
+			return Constants.OK_PLAY;
 		} else {
-			return false;
+			return Constants.NOT_GREATER;
 		}	
 	}
 	
@@ -114,23 +119,23 @@ public class BigTwoGame {
 		Message msg = handler.obtainMessage();
 		switch (message.getMessage()) {
 			case NetworkMessage.STARTING:
-				playerNumber = message.getPlayerNumber();
-				playersTurn = message.getPlayersTurn();
+				this.playerNumber = message.getPlayerNumber();
+				this.currentPlayersTurn = message.getPlayersTurn();
 				msg.what = Constants.UPDATE_VIEW;
 				handler.sendMessage(msg);
 				Log.d(TAG, "Received starting message with player number: " + playerNumber);
 				break;
 			case NetworkMessage.HAND:
 				msg.what = Constants.RECEIVED_HAND;
-				hand = message.getHand();
-				handler.sendMessage(msg);
+				this.hand = message.getHand();
+				this.handler.sendMessage(msg);
 				Log.d(TAG, "Received HAND message from server");
 				break;
 			case NetworkMessage.PLAY:
 				incrementPlayer();
 				msg.what = Constants.RECEIVED_PLAY;
-				currentPlay = message.getPlay();
-				handler.sendMessage(msg);
+				this.currentPlay = message.getPlay();
+				this.handler.sendMessage(msg);
 				break;
 		}
 	}
@@ -144,9 +149,9 @@ public class BigTwoGame {
 	}
 	
 	public void incrementPlayer() {
-		playersTurn++;
-		if (playersTurn == numberOfPlayers) {
-			playersTurn = 0;
+		currentPlayersTurn++;
+		if (currentPlayersTurn == numberOfPlayers) {
+			currentPlayersTurn = 0;
 		}
 	}
 	

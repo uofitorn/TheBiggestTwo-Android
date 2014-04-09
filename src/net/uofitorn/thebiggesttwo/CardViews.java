@@ -17,6 +17,7 @@ public class CardViews {
 	public static final String TAG = "CardViews";
 	
 	int[] xLocations;
+	int [] singleXLocation;
 	int [] pairXLocations;
 	int [] tripleXLocations;
 	int [] fiverXLocations;
@@ -34,6 +35,7 @@ public class CardViews {
 	
 	public CardViews(BigTwoGame bigTwoGame) {
 		xLocations = new int[13];
+		singleXLocation = new int[1];
 		pairXLocations = new int[2];
 		tripleXLocations = new int[3];
 		fiverXLocations = new int[5];
@@ -44,7 +46,9 @@ public class CardViews {
 	}
 	
 	protected void setInPlayLocations() {
-		inPlayYLocation = bigTwoGame.getPlayAreaY() + bigTwoGame.getPlayAreaHeight() - 100;
+		inPlayYLocation = bigTwoGame.getPlayAreaY() + bigTwoGame.getPlayAreaHeight() - 55;
+		
+		singleXLocation[0] = Constants.CAMERA_WIDTH / 2;
 		
 		pairXLocations[0] = (Constants.CAMERA_WIDTH / 2) - (Constants.SPACE_BETWEEN_CARDS / 2) - (Constants.CARD_WIDTH / 2);
 		pairXLocations[1] = Constants.CAMERA_WIDTH / 2 + (Constants.SPACE_BETWEEN_CARDS / 2) + (Constants.CARD_WIDTH / 2);
@@ -210,6 +214,9 @@ public class CardViews {
 		int []tmp = null;
 		int i = 0;
 		switch (currentPlayCards.size()) {
+			case 1:
+				tmp = singleXLocation;
+				break;
 			case 2:
 				tmp = pairXLocations;
 				break;
